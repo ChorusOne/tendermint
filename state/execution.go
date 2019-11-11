@@ -297,8 +297,8 @@ func execBlockOnProxyApp(
 	return abciResponses, nil
 }
 
-func GetBeginBlockValidatorInfo(block *types.Block, lastValSet *types.ValidatorSet, stateDB dbm.DB) (abci.LastCommitInfo, []abci.Evidence) {
-	return getBeginBlockValidatorInfo(block, lastValSet, stateDB)
+func GetBeginBlockValidatorInfo(block *types.Block, stateDB dbm.DB) (abci.LastCommitInfo, []abci.Evidence) {
+	return getBeginBlockValidatorInfo(block, stateDB)
 }
 
 func getBeginBlockValidatorInfo(block *types.Block, stateDB dbm.DB) (abci.LastCommitInfo, []abci.Evidence) {
