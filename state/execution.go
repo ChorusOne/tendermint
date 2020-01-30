@@ -302,6 +302,10 @@ func execBlockOnProxyApp(
 	return abciResponses, nil
 }
 
+func GetBeginBlockValidatorInfo(block *types.Block, stateDB dbm.DB) (abci.LastCommitInfo, []abci.Evidence) {
+	return getBeginBlockValidatorInfo(block, stateDB)
+}
+
 func getBeginBlockValidatorInfo(block *types.Block, stateDB dbm.DB) (abci.LastCommitInfo, []abci.Evidence) {
 	voteInfos := make([]abci.VoteInfo, block.LastCommit.Size())
 	byzVals := make([]abci.Evidence, len(block.Evidence.Evidence))
