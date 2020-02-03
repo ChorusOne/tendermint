@@ -116,9 +116,9 @@ func (blockExec *BlockExecutor) ValidateBlock(state State, block *types.Block) e
 // It takes a blockID to avoid recomputing the parts hash.
 func (blockExec *BlockExecutor) ApplyBlock(state State, blockID types.BlockID, block *types.Block) (State, error) {
 
-	if err := blockExec.ValidateBlock(state, block); err != nil {
-		return state, ErrInvalidBlock(err)
-	}
+	// if err := blockExec.ValidateBlock(state, block); err != nil {
+	// 	return state, ErrInvalidBlock(err)
+	// }
 
 	startTime := time.Now().UnixNano()
 	abciResponses, err := execBlockOnProxyApp(blockExec.logger, blockExec.proxyApp, block, blockExec.db)

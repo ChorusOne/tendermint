@@ -72,10 +72,10 @@ type BlockchainReactor struct {
 func NewBlockchainReactor(state sm.State, blockExec *sm.BlockExecutor, store *BlockStore,
 	fastSync bool) *BlockchainReactor {
 
-	if state.LastBlockHeight != store.Height() {
-		panic(fmt.Sprintf("state (%v) and store (%v) height mismatch", state.LastBlockHeight,
-			store.Height()))
-	}
+	// if state.LastBlockHeight != store.Height() {
+	// 	panic(fmt.Sprintf("state (%v) and store (%v) height mismatch", state.LastBlockHeight,
+	// 		store.Height()))
+	// }
 
 	requestsCh := make(chan BlockRequest, maxTotalRequesters)
 
@@ -262,23 +262,23 @@ func (bcR *BlockchainReactor) poolRoutine() {
 FOR_LOOP:
 	for {
 		select {
-		case <-switchToConsensusTicker.C:
-			height, numPending, lenRequesters := bcR.pool.GetStatus()
-			outbound, inbound, _ := bcR.Switch.NumPeers()
-			bcR.Logger.Debug("Consensus ticker", "numPending", numPending, "total", lenRequesters,
-				"outbound", outbound, "inbound", inbound)
-			if bcR.pool.IsCaughtUp() {
-				bcR.Logger.Info("Time to switch to consensus reactor!", "height", height)
-				bcR.pool.Stop()
-				conR, ok := bcR.Switch.Reactor("CONSENSUS").(consensusReactor)
-				if ok {
-					conR.SwitchToConsensus(state, blocksSynced)
-				} else {
-					// should only happen during testing
-				}
-
-				break FOR_LOOP
-			}
+		// case <-switchToConsensusTicker.C:
+		// 	height, numPending, lenRequesters := bcR.pool.GetStatus()
+		// 	outbound, inbound, _ := bcR.Switch.NumPeers()
+		// 	bcR.Logger.Debug("Consensus ticker", "numPending", numPending, "total", lenRequesters,
+		// 		"outbound", outbound, "inbound", inbound)
+		// 	if bcR.pool.IsCaughtUp() {
+		// 		bcR.Logger.Info("Time to switch to consensus reactor!", "height", height)
+		// 		bcR.pool.Stop()
+		// 		conR, ok := bcR.Switch.Reactor("CONSENSUS").(consensusReactor)
+		// 		if ok {
+		// 			conR.SwitchToConsensus(state, blocksSynced)
+		// 		} else {
+		// 			// should only happen during testing
+		// 		}
+		//
+		// 		break FOR_LOOP
+		// 	}
 
 		case <-trySyncTicker.C: // chan time
 			select {
@@ -307,53 +307,53 @@ FOR_LOOP:
 			}
 
 			firstParts := first.MakePartSet(types.BlockPartSizeBytes)
-			firstPartsHeader := firstParts.Header()
-			firstID := types.BlockID{Hash: first.Hash(), PartsHeader: firstPartsHeader}
+			// firstPartsHeader := firstParts.Header()
+			// firstID := types.BlockID{Hash: first.Hash(), PartsHeader: firstPartsHeader}
 			// Finally, verify the first block using the second's commit
 			// NOTE: we can probably make this more efficient, but note that calling
 			// first.Hash() doesn't verify the tx contents, so MakePartSet() is
 			// currently necessary.
-			err := state.Validators.VerifyCommit(
-				chainID, firstID, first.Height, second.LastCommit)
-			if err != nil {
-				bcR.Logger.Error("Error in validation", "err", err)
-				peerID := bcR.pool.RedoRequest(first.Height)
-				peer := bcR.Switch.Peers().Get(peerID)
-				if peer != nil {
-					// NOTE: we've already removed the peer's request, but we
-					// still need to clean up the rest.
-					bcR.Switch.StopPeerForError(peer, fmt.Errorf("BlockchainReactor validation error: %v", err))
-				}
-				peerID2 := bcR.pool.RedoRequest(second.Height)
-				peer2 := bcR.Switch.Peers().Get(peerID2)
-				if peer2 != nil && peer2 != peer {
-					// NOTE: we've already removed the peer's request, but we
-					// still need to clean up the rest.
-					bcR.Switch.StopPeerForError(peer2, fmt.Errorf("BlockchainReactor validation error: %v", err))
-				}
-				continue FOR_LOOP
-			} else {
+			// err := state.Validators.VerifyCommit(
+			// 	chainID, firstID, first.Height, second.LastCommit)
+			// if err != nil {
+			// 	bcR.Logger.Error("Error in validation", "err", err)
+			// 	peerID := bcR.pool.RedoRequest(first.Height)
+			// 	peer := bcR.Switch.Peers().Get(peerID)
+			// 	if peer != nil {
+			// 		// NOTE: we've already removed the peer's request, but we
+			// 		// still need to clean up the rest.
+			// 		bcR.Switch.StopPeerForError(peer, fmt.Errorf("BlockchainReactor validation error: %v", err))
+			// 	}
+			// 	peerID2 := bcR.pool.RedoRequest(second.Height)
+			// 	peer2 := bcR.Switch.Peers().Get(peerID2)
+			// 	if peer2 != nil && peer2 != peer {
+			// 		// NOTE: we've already removed the peer's request, but we
+			// 		// still need to clean up the rest.
+			// 		bcR.Switch.StopPeerForError(peer2, fmt.Errorf("BlockchainReactor validation error: %v", err))
+			// 	}
+			// 	continue FOR_LOOP
+			// } else {
 				bcR.pool.PopRequest()
 
 				// TODO: batch saves so we dont persist to disk every block
-				bcR.store.SaveBlock(first, firstParts, second.LastCommit)
-
-				// TODO: same thing for app - but we would need a way to
-				// get the hash without persisting the state
-				var err error
-				state, err = bcR.blockExec.ApplyBlock(state, firstID, first)
-				if err != nil {
-					// TODO This is bad, are we zombie?
-					panic(fmt.Sprintf("Failed to process committed block (%d:%X): %v", first.Height, first.Hash(), err))
-				}
-				blocksSynced++
-
-				if blocksSynced%100 == 0 {
-					lastRate = 0.9*lastRate + 0.1*(100/time.Since(lastHundred).Seconds())
-					bcR.Logger.Info("Fast Sync Rate", "height", bcR.pool.height,
-						"max_peer_height", bcR.pool.MaxPeerHeight(), "blocks/s", lastRate)
-					lastHundred = time.Now()
-				}
+				// bcR.store.SaveBlock(first, firstParts, second.LastCommit)
+				//
+				// // TODO: same thing for app - but we would need a way to
+				// // get the hash without persisting the state
+				// var err error
+				// state, err = bcR.blockExec.ApplyBlock(state, firstID, first)
+				// if err != nil {
+				// 	// TODO This is bad, are we zombie?
+				// 	panic(fmt.Sprintf("Failed to process committed block (%d:%X): %v", first.Height, first.Hash(), err))
+				// }
+				// blocksSynced++
+				//
+				// if blocksSynced%100 == 0 {
+				// 	lastRate = 0.9*lastRate + 0.1*(100/time.Since(lastHundred).Seconds())
+				// 	bcR.Logger.Info("Fast Sync Rate", "height", bcR.pool.height,
+				// 		"max_peer_height", bcR.pool.MaxPeerHeight(), "blocks/s", lastRate)
+				// 	lastHundred = time.Now()
+				// }
 			}
 			continue FOR_LOOP
 
