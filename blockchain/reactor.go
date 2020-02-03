@@ -216,12 +216,12 @@ func (bcR *BlockchainReactor) poolRoutine() {
 
 	trySyncTicker := time.NewTicker(trySyncIntervalMS * time.Millisecond)
 	statusUpdateTicker := time.NewTicker(statusUpdateIntervalSeconds * time.Second)
-	switchToConsensusTicker := time.NewTicker(switchToConsensusIntervalSeconds * time.Second)
+	//switchToConsensusTicker := time.NewTicker(switchToConsensusIntervalSeconds * time.Second)
 
 	blocksSynced := 0
 
-	chainID := bcR.initialState.ChainID
-	state := bcR.initialState
+	//chainID := bcR.initialState.ChainID
+	//state := bcR.initialState
 
 	lastHundred := time.Now()
 	lastRate := 0.0
@@ -333,28 +333,28 @@ FOR_LOOP:
 			// 	}
 			// 	continue FOR_LOOP
 			// } else {
-				bcR.pool.PopRequest()
+			bcR.pool.PopRequest()
 
-				// TODO: batch saves so we dont persist to disk every block
-				// bcR.store.SaveBlock(first, firstParts, second.LastCommit)
-				//
-				// // TODO: same thing for app - but we would need a way to
-				// // get the hash without persisting the state
-				// var err error
-				// state, err = bcR.blockExec.ApplyBlock(state, firstID, first)
-				// if err != nil {
-				// 	// TODO This is bad, are we zombie?
-				// 	panic(fmt.Sprintf("Failed to process committed block (%d:%X): %v", first.Height, first.Hash(), err))
-				// }
-				// blocksSynced++
-				//
-				// if blocksSynced%100 == 0 {
-				// 	lastRate = 0.9*lastRate + 0.1*(100/time.Since(lastHundred).Seconds())
-				// 	bcR.Logger.Info("Fast Sync Rate", "height", bcR.pool.height,
-				// 		"max_peer_height", bcR.pool.MaxPeerHeight(), "blocks/s", lastRate)
-				// 	lastHundred = time.Now()
-				// }
+			// TODO: batch saves so we dont persist to disk every block
+			bcR.store.SaveBlock(first, firstParts, second.LastCommit)
+
+			// TODO: same thing for app - but we would need a way to
+			// get the hash without persisting the state
+			// var err error
+			// state, err = bcR.blockExec.ApplyBlock(state, firstID, first)
+			// if err != nil {
+			// 	// TODO This is bad, are we zombie?
+			// 	panic(fmt.Sprintf("Failed to process committed block (%d:%X): %v", first.Height, first.Hash(), err))
+			// }
+			blocksSynced++
+
+			if blocksSynced%100 == 0 {
+				lastRate = 0.9*lastRate + 0.1*(100/time.Since(lastHundred).Seconds())
+				bcR.Logger.Info("Fast Sync Rate", "height", bcR.pool.height,
+					"max_peer_height", bcR.pool.MaxPeerHeight(), "blocks/s", lastRate)
+				lastHundred = time.Now()
 			}
+			//}
 			continue FOR_LOOP
 
 		case <-bcR.Quit():
