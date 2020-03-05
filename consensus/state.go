@@ -32,6 +32,7 @@ var (
 	ErrInvalidProposalPOLRound  = errors.New("Error invalid proposal POL round")
 	ErrAddingVote               = errors.New("Error adding vote")
 	ErrVoteHeightMismatch       = errors.New("Error vote height mismatch")
+	ErrVoteBlacklisted          = errors.New("Vote excluded to due blacklist")
 )
 
 //-----------------------------------------------------------------------------
@@ -1658,6 +1659,12 @@ func (cs *ConsensusState) addVote(
 		"voteType", vote.Type,
 		"valIndex", vote.ValidatorIndex,
 		"csHeight", cs.Height)
+
+	for _, address := range cs.Config.GetBlacklistAddresses() {
+		if address == vote.ValidatorAddress.String() {
+			return added, ErrVoteBlacklisted
+		}
+	}
 
 	// A precommit for the previous height?
 	// These come in while we wait timeoutCommit
