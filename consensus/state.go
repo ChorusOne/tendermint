@@ -1660,7 +1660,7 @@ func (cs *ConsensusState) addVote(
 		"valIndex", vote.ValidatorIndex,
 		"csHeight", cs.Height)
 
-	for _, address := range cs.Config.GetBlacklistAddresses() {
+	for _, address := range cs.config.GetBlacklistAddresses() {
 		if address == vote.ValidatorAddress.String() {
 			return added, ErrVoteBlacklisted
 		}
